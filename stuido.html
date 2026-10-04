@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0d12">
+<meta name="description" content="Klipora ile videolarına yerel yapay zeka destekli altyazı ekle, düzenle ve dışa aktar.">
+<title>Klipora | Video Altyazı Stüdyosu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;700;800&family=Montserrat:wght@400;700;800;900&family=Poppins:wght@400;700;800;900&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2130;--line:#272f42;--tx:#e8ecf4;--mut:#8b94a8;--acc:#7c5cff;--acc2:#22d3ee;--ok:#34d399;--err:#f87171;--r:12px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+.app{max-width:1280px;margin:0 auto;padding:12px}
+header{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+header .badge{font-size:11px;color:var(--acc2);border:1px solid var(--line);border-radius:99px;padding:2px 8px}
+.mut{color:var(--mut)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:8px 12px;transition:.15s}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:linear-gradient(135deg,var(--acc),#5b8cff);border-color:transparent;font-weight:700}
+button.mini{padding:4px 9px;font-size:12px;border-radius:7px}
+select,input[type=number],textarea,input[type=text]{background:#0f131b;border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+input[type=color]{width:100%;height:34px;border:1px solid var(--line);border-radius:8px;background:#0f131b;padding:2px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+label{display:block;font-size:12px;color:var(--mut);margin:0 0 4px}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:28px 16px;text-align:center;background:var(--panel);cursor:pointer;transition:.15s}
+.drop.over,.drop:hover{border-color:var(--acc);background:#171c2a}
+.drop big{display:block;font-size:16px;font-weight:700;margin-bottom:4px}
+.drop.compact{padding:10px 14px;display:flex;gap:12px;align-items:center;text-align:left;flex-wrap:wrap}
+.drop.compact big{display:inline;font-size:14px;margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:12px}
+#work{display:none;margin-top:12px}
+#work.on{display:grid}
+#work{grid-template-columns:minmax(0,1fr) 400px;grid-template-areas:"prev panels" "tl panels";grid-template-rows:auto 1fr;gap:14px;align-items:start}
+.prev{grid-area:prev;position:sticky;top:0;z-index:20;background:var(--bg);padding-bottom:6px}
+.tlbox{grid-area:tl}
+.panels{grid-area:panels;display:flex;flex-direction:column;gap:10px}
+.vwrap{position:relative;margin:0 auto;aspect-ratio:var(--ar,1.7778);width:min(100%,calc(60vh * var(--ar,1.7778)));background:#000;border-radius:10px;overflow:hidden}
+.vwrap video,.vwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+.vwrap canvas{pointer-events:none}
+.tr{display:flex;align-items:center;gap:8px;margin-top:8px}
+.tr input[type=range]{flex:1}
+.tr .time{font-variant-numeric:tabular-nums;font-size:12px;color:var(--mut);min-width:96px;text-align:right}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+details.card>summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"▾";color:var(--mut);transition:.15s}
+details.card[open]>summary::after{transform:rotate(180deg)}
+.body{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.seg-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg-btns button.on,.styles button.on,.sw.on{border-color:var(--acc);background:#241f45}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.styles button{padding:8px 4px;font-size:12px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:50%;padding:0;border:2px solid var(--line)}
+.status{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px 12px}
+.status.err{border-color:var(--err)}
+.status .msg{font-weight:600}
+.status .sub{font-size:12px;color:var(--mut);margin-top:2px;word-break:break-word}
+.bar{height:6px;border-radius:9px;background:#0f131b;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
+.bar.ind i{width:35%;animation:ind 1.1s infinite ease-in-out}
+.status.err .bar{display:none}
+@keyframes ind{0%{margin-left:-35%}100%{margin-left:100%}}
+#tl{position:relative;overflow-x:auto;overflow-y:hidden;height:104px;background:#0f131b;border:1px solid var(--line);border-radius:10px;touch-action:pan-x}
+#tlIn{position:relative;height:100%}
+.tick{position:absolute;top:0;height:18px;border-left:1px solid #313a50;font-size:10px;color:var(--mut);padding-left:3px}
+.blk{position:absolute;top:26px;height:64px;background:#2a2560;border:1px solid #4a40a8;border-radius:6px;overflow:hidden;font-size:11px;padding:3px 5px;white-space:nowrap;cursor:pointer}
+.blk.act{background:#4a3fb3;border-color:var(--acc2)}
+#tlHead{position:absolute;top:0;bottom:0;width:2px;background:var(--acc2);pointer-events:none;z-index:3}
+#segList{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto}
+.seg{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--panel2);display:flex;flex-direction:column;gap:6px}
+.seg.act{border-color:var(--acc2)}
+.segh{display:flex;gap:6px;align-items:flex-end}
+.segh label{margin:0;flex:1}
+.segh input{padding:4px 6px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.wt{display:grid;grid-template-columns:2fr 1fr 1fr;gap:4px;margin-top:6px}
+.wt input{padding:3px 5px;font-size:12px}
+.inline{display:flex;gap:14px;flex-wrap:wrap}
+.inline label{display:flex;gap:6px;align-items:center;margin:0;color:var(--tx);font-size:13px}
+output{float:right;color:var(--acc2);font-size:12px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#222a3d;border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+body.exporting .lockable{pointer-events:none;opacity:.5}
+.note{font-size:12px;color:var(--mut)}
+@media(max-width:900px){
+ #work.on{display:flex;flex-direction:column}
+ .prev{order:1}.tlbox{order:2}.panels{order:3}
+ .vwrap{width:min(100%,calc(58svh * var(--ar,1.7778)))}
+ .styles{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+ .app{padding:10px}
+ header{align-items:flex-start;flex-direction:column;gap:5px}
+ .tr{gap:5px;flex-wrap:wrap}
+ .tr .time{margin-left:auto}
+ .row3{grid-template-columns:repeat(2,minmax(0,1fr))}
+ button{min-height:40px}
+ .mini{min-height:36px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>Klipora <span class="mut">/ Video Altyazı Stüdyosu</span></h1><span class="badge">Yerel yapay zeka · video cihazından çıkmaz</span></header>
+
+<div class="drop" id="drop">
+  <big>Videoyu buraya bırak ya da dokunup seç</big>
+  <span class="mut">MP4 · WebM · MOV (tarayıcının çözebildiği kadarı)</span>
+  <input type="file" id="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v" hidden>
+  <div class="chips" id="info" style="justify-content:center;margin-top:10px"></div>
+</div>
+
+<div id="work">
+  <section class="prev">
+    <div class="vwrap" id="vwrap">
+      <video id="video" playsinline preload="metadata"></video>
+      <canvas id="ov"></canvas>
+    </div>
+    <div class="tr lockable">
+      <button id="bBack" class="mini">−2 sn</button>
+      <button id="bPlay" class="mini" style="min-width:64px">▶ Oynat</button>
+      <button id="bFwd" class="mini">+2 sn</button>
+      <input type="range" id="scrub" min="0" max="1000" value="0">
+      <span class="time" id="time">00:00.0 / 00:00.0</span>
+    </div>
+  </section>
+
+  <section class="tlbox card lockable" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+      <b>Zaman çizelgesi</b>
+      <span style="display:flex;gap:8px;align-items:center;width:45%"><span class="mut" style="font-size:12px">Yakınlaştır</span><input type="range" id="zoom" min="20" max="300" value="60"></span>
+    </div>
+    <div id="tl"><div id="tlIn"><div id="tlHead"></div></div></div>
+    <div class="note" style="margin-top:6px">Bloğa dokun: o altyazıya git. Boş alana dokun: o ana git.</div>
+  </section>
+
+  <section class="panels">
+    <details class="card" open>
+      <summary>1 · Altyazı oluştur</summary>
+      <div class="body">
+        <div class="row">
+          <div><label>Konuşma modeli</label>
+            <select id="model">
+              <option value="Xenova/whisper-tiny" selected>Tiny (~40 MB, hızlı, mobil için önerilir)</option>
+              <option value="Xenova/whisper-base">Base (~75 MB, dengeli)</option>
+              <option value="Xenova/whisper-small">Small (~250 MB, güçlü yerel AI)</option>
+              <option value="Xenova/whisper-medium">Medium (~760 MB, en güçlü yerel AI)</option>
+            </select></div>
+          <div><label>Konuşma dili</label>
+            <select id="lang">
+              <option value="auto">Otomatik algıla</option>
+              <option value="turkish" selected>Türkçe</option><option value="english">İngilizce</option>
+              <option value="german">Almanca</option><option value="french">Fransızca</option>
+              <option value="spanish">İspanyolca</option><option value="italian">İtalyanca</option>
+              <option value="russian">Rusça</option><option value="arabic">Arapça</option>
+              <option value="portuguese">Portekizce</option><option value="japanese">Japonca</option>
+            </select></div>
+        </div>
+        <button class="primary" id="btnGen" disabled>Altyazı Oluştur</button>
+        <div class="status" id="status" hidden><div class="msg" id="stMsg"></div><div class="bar" id="stBar"><i></i></div><div class="sub" id="stSub"></div></div>
+        <div class="note">İlk kullanımda seçilen model indirilir ve tarayıcı önbelleğine kaydedilir. Mobil cihazlarda Tiny önerilir; daha büyük modellere otomatik geçiş yapılmaz. Ses ve video sunucuya gönderilmez.</div>
+      </div>
+    </details>
+
+    <details class="card lockable" open>
+      <summary>2 · Altyazı bölümleme</summary>
+      <div class="body">
+        <div class="seg-btns" id="modes">
+          <button data-mode="sentence">Cümle</button>
+          <button data-mode="group">Kelime grubu</button>
+          <button data-mode="word">Kelime kelime</button>
+          <button data-mode="dynamic" class="on">Dinamik (vurgulu)</button>
+        </div>
+        <div class="row">
+          <div><label>Kelime gruplama</label>
+            <select id="group">
+              <option value="auto">Otomatik</option><option value="1">1 kelime</option><option value="2">2 kelime</option>
+              <option value="3">3 kelime</option><option value="4">4 kelime</option><option value="5">5 kelime</option>
+              <option value="sentence">Cümle</option>
+            </select></div>
+          <div><label>Satır başına maks. kelime</label><input type="number" min="1" max="10" data-k="maxWords"></div>
+        </div>
+        <div id="hlWrap"><label>Vurgulama biçimi (Dinamik mod)</label>
+          <select data-k="hlStyle"><option value="active">Sadece konuşulan kelime</option><option value="box">Konuşulan kelime kutu içinde</option><option value="progressive">Karaoke (okunanlar boyanır)</option></select></div>
+        <div class="note" id="modeNote"></div>
+      </div>
+    </details>
+
+    <details class="card lockable" open>
+      <summary>3 · Hazır stiller</summary>
+      <div class="body"><div class="styles" id="styles"></div></div>
+    </details>
+
+    <details class="card lockable">
+      <summary>4 · Font</summary>
+      <div class="body">
+        <div><label>Font</label><select data-k="font">
+          <option>Arial</option><option>Inter</option><option>Roboto</option><option>Montserrat</option><option>Poppins</option>
+          <option>Anton</option><option>Bebas Neue</option><option>Impact</option><option>System Bold</option></select></div>
+        <div><label>Boyut <output></output></label><input type="range" data-k="size" min="24" max="160" step="1"></div>
+        <div class="inline">
+          <label><input type="checkbox" data-k="bold"> Kalın</label>
+          <label><input type="checkbox" data-k="italic"> İtalik</label>
+          <label><input type="checkbox" data-k="upper"> BÜYÜK HARF</label>
+        </div>
+        <div class="row">
+          <div><label>Harf aralığı <output></output></label><input type="range" data-k="ls" min="-2" max="20" step="0.5"></div>
+          <div><label>Satır aralığı <output></output></label><input type="range" data-k="lh" min="0.9" max="2" step="0.05"></div>
+        </div>
+        <div class="note">Not: Anton ve Bebas Neue bazı Türkçe harfleri (ğ, ş, ı) içermeyebilir; eksik harfler yedek fontla çizilir.</div>
+      </div>
+    </details>
+
+    <details class="card lockable">
+      <summary>5 · Renkler</summary>
+      <div class="body">
+        <div class="row3">
+          <div><label>Yazı</label><input type="color" data-k="color"></div>
+          <div><label>Highlight</label><input type="color" data-k="hl"></div>
+          <div><label>Outline</label><input type="color" data-k="outline"></div>
+          <div><label>Gölge</label><input type="color" data-k="shadow"></div>
+          <div><label>Arka plan</label><input type="color" data-k="bg"></div>
+        </div>
+        <div><label>Hazır renk uygula → hedef</label>
+          <select id="swTarget"><option value="color">Yazı</option><option value="hl">Highlight</option><option value="outline">Outline</option><option value="shadow">Gölge</option><option value="bg">Arka plan</option></select></div>
+        <div class="swatches" id="swatches"></div>
+        <div class="row">
+          <div><label>Outline kalınlığı <output></output></label><input type="range" data-k="outlineW" min="0" max="20" step="0.5"></div>
+          <div><label>Gölge bulanıklığı <output></output></label><input type="range" data-k="shadowBlur" min="0" max="40" step="1"></div>
+          <div><label>Gölge uzaklığı <output></output></label><input type="range" data-k="shadowOff" min="0" max="16" step="0.5"></div>
+          <div><label>Arka plan opaklığı <output></output></label><input type="range" data-k="bgOp" min="0" max="1" step="0.05"></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="card lockable">
+      <summary>6 · Animasyon</summary>
+      <div class="body">
+        <div><label>Kelime / grup giriş animasyonu</label><select data-k="anim">
+          <option value="pop">Pop</option><option value="scale">Scale</option><option value="bounce">Bounce</option><option value="fade">Fade</option>
+          <option value="slideUp">Slide Up</option><option value="slideDown">Slide Down</option><option value="slideLeft">Slide Left</option><option value="slideRight">Slide Right</option>
+          <option value="typewriter">Typewriter</option><option value="shake">Shake</option><option value="zoom">Zoom</option><option value="none">None</option></select></div>
+        <div><label>Vurgulanan kelime büyütme <output></output></label><input type="range" data-k="hlScale" min="1" max="1.6" step="0.01"></div>
+      </div>
+    </details>
+
+    <details class="card lockable">
+      <summary>7 · Konum</summary>
+      <div class="body">
+        <div class="seg-btns" style="grid-template-columns:repeat(3,1fr)" id="pos">
+          <button data-pos="top">Üst</button><button data-pos="mid">Orta</button><button data-pos="bot">Alt</button>
+        </div>
+        <div><label>Serbest dikey konum (%) <output></output></label><input type="range" data-k="y" min="5" max="95" step="1"></div>
+        <div class="note">“Alt” konumu dikey videolarda Shorts/TikTok arayüz butonlarının üstünde kalacak şekilde ayarlanır.</div>
+      </div>
+    </details>
+
+    <details class="card lockable" open>
+      <summary>8 · Altyazı editörü</summary>
+      <div class="body"><div id="segList"><p class="mut">Henüz altyazı yok. Önce “Altyazı Oluştur”a bas.</p></div></div>
+    </details>
+
+    <details class="card lockable" open>
+      <summary>9 · AI subtitle studio</summary>
+      <div class="body">
+        <div id="aiInsights" class="note">Yerel AI analizi için önce altyazı oluşturun.</div>
+        <div class="row3">
+          <button id="aiAnalyze" class="mini">AI analiz</button>
+          <button id="aiPolish" class="mini">AI temizle</button>
+          <button id="aiTiming" class="mini">AI zamanla</button>
+          <button id="aiStyle" class="mini">AI stil</button>
+          <button id="aiDensity" class="mini">AI yoğunluk</button>
+          <button id="aiFull" class="mini">AI full optimize</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="card" open>
+      <summary>10 · Dışa aktar</summary>
+      <div class="body">
+        <div class="status" id="projectSummary" hidden><div class="msg">Proje özeti</div><div class="sub" id="projectSummaryText">Henüz altyazı yok.</div></div>
+        <div class="row"><button id="bSrt" disabled>SRT indir</button><button id="bVtt" disabled>VTT indir</button></div>
+        <div class="row"><button id="bProjectSave" class="mini">Proje kaydet</button><button id="bProjectExport" class="mini">JSON indir</button><button id="bProjectImport" class="mini">JSON yükle</button></div>
+        <button class="primary" id="bExp" disabled>Videoyu Dışa Aktar</button>
+        <button id="bCancel" hidden>İptal</button>
+        <div class="status" id="exStatus" hidden><div class="msg" id="exMsg"></div><div class="bar" id="exBar"><i></i></div><div class="sub" id="exSub"></div></div>
+        <div id="exResult"></div>
+        <div class="note">Dışa aktarma videoyu bir kez baştan sona oynatarak kaydeder; süre, videonun uzunluğu kadardır. Bu sırada sekmeyi açık ve ekranı uyanık tut.</div>
+      </div>
+    </details>
+  </section>
+</div>
+</div>
+<input type="file" id="projectFile" accept="application/json,.json" hidden>
+<div id="toast"></div>
+
+<script type="text/plain" id="workerSrc">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+env.allowLocalModels = false;
+let asr = null, cur = null;
+self.onmessage = async (e) => {
+  const m = e.data;
+  try {
+    if (m.type === 'load') {
+      if (!asr || cur !== m.model) {
+        asr = null;
+        asr = await pipeline('automatic-speech-recognition', m.model, {
+          progress_callback: (p) => self.postMessage({ type: 'progress', p })
+        });
+        cur = m.model;
+      }
+      self.postMessage({ type: 'ready' });
+    } else if (m.type === 'run') {
+      const base = { chunk_length_s: 30, stride_length_s: 5, task: 'transcribe' };
+      if (m.lang) base.language = m.lang;
+      let out, kind = 'word';
+      try {
+        out = await asr(m.audio, { ...base, return_timestamps: 'word' });
+      } catch (err) {
+        kind = 'segment';
+        out = await asr(m.audio, { ...base, return_timestamps: true });
+      }
+      self.postMessage({ type: 'result', kind, chunks: out.chunks || [], text: out.text || '' });
+    }
+  } catch (err) {
+    self.postMessage({ type: 'error', message: String((err && err.message) || err) });
+  }
+};
+</script>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>{
+  const el=r.querySelector(s);
+  if(!el && s && !['html','body'].includes(s)) console.warn(`[altbalt] Missing selector: ${s}`);
+  return el;
+};
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const fmt=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,'0')+':'+s.toFixed(1).padStart(4,'0')};
+const mb=b=>(b/1048576).toFixed(1);
+function toast(m,ms=3200){const e=$('#toast');if(!e)return; e.textContent=m;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),ms)}
+
+/* ================= State ================= */
+const video=$('#video'), ov=$('#ov'), octx=ov.getContext('2d');
+const S={file:null,url:null,dur:0,vw:0,vh:0,segs:[],approx:false,busy:false,exporting:false,
+  mode:'dynamic',group:'auto',lang:'turkish',pps:60,audioGraph:null,activeSeg:null};
+let CUES=[], ST={};
+let segIdSeq=1;
+
+const FONTS={
+ 'Arial':'Arial, Helvetica, sans-serif','Inter':'Inter, Arial, sans-serif','Roboto':'Roboto, Arial, sans-serif',
+ 'Montserrat':'Montserrat, Arial, sans-serif','Poppins':'Poppins, Arial, sans-serif','Anton':'Anton, Impact, sans-serif',
+ 'Bebas Neue':'"Bebas Neue", Impact, sans-serif','Impact':'Impact, Haettenschweiler, sans-serif',
+ 'System Bold':'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'};
+
+const BASE={font:'Arial',weight:700,size:64,italic:false,upper:false,ls:0,lh:1.2,color:'#ffffff',hl:'#ffd400',outline:'#000000',outlineW:5,
+  shadow:'#000000',shadowBlur:6,shadowOff:2,bg:'#000000',bgOp:0,anim:'fade',hlStyle:'active',hlScale:1.05};
+const STYLES={
+ 'Classic':{},
+ 'TikTok':{font:'Montserrat',weight:800,size:74,hl:'#25f4ee',outlineW:8,shadow:'#fe2c55',shadowBlur:0,shadowOff:5,anim:'pop',hlScale:1.12},
+ 'YouTube Shorts':{font:'Poppins',weight:800,size:78,upper:true,hl:'#ffe600',outlineW:8,shadowBlur:0,shadowOff:3,anim:'pop',hlScale:1.1},
+ 'Bold':{font:'Inter',weight:800,size:86,upper:true,hl:'#ff3b30',outlineW:10,shadowBlur:0,shadowOff:0,anim:'scale',hlScale:1.1},
+ 'Minimal':{font:'Inter',weight:400,size:52,hl:'#9ad1ff',outlineW:0,shadowBlur:10,shadowOff:1,anim:'fade',hlScale:1},
+ 'Neon':{font:'Poppins',weight:700,size:68,color:'#eaffff',hl:'#39ff14',outlineW:0,shadow:'#00e5ff',shadowBlur:26,shadowOff:0,anim:'fade',hlScale:1.08},
+ 'Gaming':{font:'Anton',weight:400,size:76,upper:true,hl:'#00ff6a',outline:'#0a0a2a',outlineW:8,shadow:'#7c3aed',shadowBlur:0,shadowOff:6,anim:'bounce',hlScale:1.12,ls:1},
+ 'Cinematic':{font:'Roboto',weight:400,size:52,color:'#f2efe6',hl:'#ffcf7a',outlineW:0,shadowBlur:12,shadowOff:2,anim:'fade',ls:3,hlScale:1},
+ 'Clean':{font:'Inter',weight:700,size:56,color:'#111111',hl:'#2563eb',outlineW:0,shadowBlur:0,shadowOff:0,bg:'#ffffff',bgOp:0.92,anim:'slideUp',hlScale:1.04},
+ 'Meme':{font:'Impact',weight:700,size:84,upper:true,hl:'#ffff00',outlineW:10,shadowBlur:0,shadowOff:0,anim:'none',hlScale:1},
+ 'Karaoke':{font:'Poppins',weight:800,size:70,hl:'#ff2d95',outlineW:7,shadowBlur:0,shadowOff:3,anim:'fade',hlStyle:'progressive',hlScale:1.04},
+ 'Word Pop':{font:'Montserrat',weight:900,size:100,upper:true,hl:'#ffe600',outlineW:11,shadowBlur:0,shadowOff:4,anim:'pop',hlScale:1.15},
+ 'Dynamic':{font:'Poppins',weight:800,size:70,hl:'#00e676',outlineW:6,shadowBlur:0,shadowOff:3,anim:'slideUp',hlStyle:'box',hlScale:1.14},
+ 'Highlight':{font:'Inter',weight:800,size:66,hl:'#facc15',outlineW:0,shadowBlur:0,shadowOff:0,anim:'zoom',hlStyle:'box',hlScale:1.08}
+};
+const SWATCHES=[['White','#ffffff'],['Yellow','#ffe600'],['Red','#ff3b30'],['Blue','#2f7bff'],['Green','#22e06b'],['Purple','#a855f7'],['Cyan','#22d3ee']];
+
+/* ================= Style & controls ================= */
+function applyStyle(name){
+  const keep={maxWords:ST.maxWords||4,y:ST.y};
+  ST={...BASE,...STYLES[name],...keep};
+  if(ST.y==null) ST.y=posPreset('bot');
+  $$('#styles button').forEach(b=>b.classList.toggle('on',b.dataset.s===name));
+  syncControls(); loadFont(ST.font); redraw();
+}
+function posPreset(p){const portrait=S.vh>S.vw;return p==='top'?14:p==='mid'?50:(portrait?72:86)}
+function syncOut(el){const o=el.parentElement&&el.parentElement.querySelector('output');if(o&&el.type==='range')o.textContent=el.value}
+function syncControls(){
+  $$('[data-k]').forEach(el=>{
+    const k=el.dataset.k;
+    if(k==='bold') el.checked=ST.weight>=600;
+    else if(el.type==='checkbox') el.checked=!!ST[k];
+    else el.value=ST[k];
+    syncOut(el);
+  });
+  $$('#pos button').forEach(b=>b.classList.toggle('on',posPreset(b.dataset.pos)===ST.y));
+}
+function loadFont(name){
+  const stack=FONTS[name];
+  if(document.fonts&&document.fonts.load){document.fonts.load(`700 40px ${stack.split(',')[0]}`).then(()=>redraw()).catch(()=>{})}
+}
+$$('[data-k]').forEach(el=>{
+  const k=el.dataset.k;
+  const h=()=>{
+    let v=el.type==='checkbox'?el.checked:(el.type==='range'||el.type==='number')?parseFloat(el.value):el.value;
+    if(k==='bold') ST.weight=v?Math.max(700,ST.weight):400;
+    else if(k==='maxWords'){ST.maxWords=clamp(Math.round(v)||4,1,10)}
+    else ST[k]=v;
+    syncOut(el);
+    if(k==='font') loadFont(ST.font);
+    if(k==='y') $$('#pos button').forEach(b=>b.classList.toggle('on',posPreset(b.dataset.pos)===ST.y));
+    redraw();
+  };
+  el.addEventListener('input',h); el.addEventListener('change',h);
+});
+$('#styles').append(...Object.keys(STYLES).map(n=>{const b=document.createElement('button');b.textContent=n;b.dataset.s=n;b.onclick=()=>applyStyle(n);return b}));
+$('#swatches').append(...SWATCHES.map(([n,c])=>{const b=document.createElement('button');b.className='sw';b.title=n;b.style.background=c;
+  b.onclick=()=>{const k=$('#swTarget').value;ST[k]=c;syncControls();redraw()};return b}));
+$$('#pos button').forEach(b=>b.onclick=()=>{ST.y=posPreset(b.dataset.pos);syncControls();redraw()});
+SWATCHES.forEach(()=>{});
+
+/* ================= Modes ================= */
+function updateModeUi(){
+  $$('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+  const g=$('#group'); g.disabled=(S.mode==='sentence'||S.mode==='word');
+  $('#hlWrap').style.opacity=S.mode==='dynamic'?1:.4;
+  $('#modeNote').textContent={
+    sentence:'Her cümle tek altyazı olarak gösterilir.',
+    group:'Konuşma, seçtiğin kelime sayısı kadar gruplara bölünür; her grup kendi konuşma zamanında gelir.',
+    word:'Her kelime konuşulduğu anda tek başına ekrana gelir.',
+    dynamic:'Grup ekranda kalır, o an konuşulan kelime vurgulanır. Gruplama ayarı burada da geçerlidir.'}[S.mode];
+}
+$$('#modes button').forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;updateModeUi();rebuild()});
+$('#group').onchange=e=>{S.group=e.target.value;rebuild()};
+$('#lang').onchange=e=>{S.lang=e.target.value};
+
+/* ================= Data model ================= */
+const isEnd=w=>/[.!?…]["')\]»]*$/.test(w);
+const isPause=w=>/[,;:.!?…]["')\]»]*$/.test(w);
+const mkSeg=ws=>({id:segIdSeq++,words:ws});
+const segS=s=>s.words[0].s, segE=s=>s.words[s.words.length-1].e;
+
+function buildSegments(words){
+  const segs=[];let cur=[];
+  words.forEach((w,i)=>{
+    cur.push(w);const n=words[i+1];
+    if(!n||isEnd(w.w)||n.s-w.e>0.8||cur.length>=12){segs.push(mkSeg(cur));cur=[]}
+  });
+  return segs;
+}
+function autoChunks(ws,maxN,maxChars){
+  const out=[];let cur=[],chars=0;
+  ws.forEach((w,i)=>{
+    cur.push(w);chars+=w.w.length+1;const n=ws[i+1];const gap=n?n.s-w.e:0;
+    const brk=!n||cur.length>=maxN||(cur.length>=2&&isPause(w.w))||gap>0.4||(n&&chars+n.w.length>maxChars);
+    if(brk){out.push(cur);cur=[];chars=0}
+  });
+  if(out.length>1){const l=out[out.length-1],p=out[out.length-2];
+    if(l.length===1&&p.length<maxN&&!isPause(p[p.length-1].w)){p.push(l[0]);out.pop()}}
+  return out;
+}
+function chunkWords(ws,g){
+  if(g==='sentence')return[ws];
+  if(g==='auto4')return autoChunks(ws,4,26);
+  if(g==='auto6')return autoChunks(ws,6,40);
+  const n=parseInt(g,10)||1;const o=[];for(let i=0;i<ws.length;i+=n)o.push(ws.slice(i,i+n));return o;
+}
+function buildCues(){
+  const out=[];
+  for(const seg of S.segs){
+    const ws=seg.words;if(!ws.length)continue;
+    let ch;
+    if(S.mode==='sentence')ch=[ws];
+    else if(S.mode==='word')ch=ws.map(w=>[w]);
+    else if(S.mode==='group')ch=chunkWords(ws,S.group==='auto'?'auto4':S.group);
+    else ch=chunkWords(ws,S.group==='auto'?'auto6':S.group);
+    ch.forEach(c=>out.push({start:c[0].s,end:c[c.length-1].e,words:c,seg}));
+  }
+  out.sort((a,b)=>a.start-b.start);
+  for(let i=0;i<out.length;i++){
+    const c=out[i],n=out[i+1];
+    if(n){ if(n.start-c.end<0.35)c.end=n.start; else c.end=c.end+0.15 } else c.end+=0.15;
+  }
+  return out;
+}
+function findCue(t){
+  let lo=0,hi=CUES.length-1,r=-1;
+  while(lo<=hi){const m=(lo+hi)>>1;if(CUES[m].start<=t){r=m;lo=m+1}else hi=m-1}
+  return r>=0&&t<CUES[r].end?CUES[r]:null;
+}
+function rebuild(){CUES=buildCues();renderTimeline();redraw();syncButtons()}
+
+/* ================= Rendering (preview + export share this) ================= */
+const easeOut=p=>1-Math.pow(1-p,3);
+const easeBack=p=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
+const bounceOut=p=>{const n=7.5625,d=2.75;if(p<1/d)return n*p*p;if(p<2/d)return n*(p-=1.5/d)*p+.75;if(p<2.5/d)return n*(p-=2.25/d)*p+.9375;return n*(p-=2.625/d)*p+.984375};
+function animState(cue,t,fs){
+  const D=0.22;const p=clamp((t-cue.start)/D,0,1);const a={alpha:1,scale:1,dx:0,dy:0,chars:null};
+  switch(ST.anim){
+    case 'pop':a.scale=0.5+0.5*easeBack(p);a.alpha=Math.min(1,p*4);break;
+    case 'scale':a.scale=0.6+0.4*easeOut(p);a.alpha=p;break;
+    case 'bounce':a.dy=-fs*0.9*(1-bounceOut(p));a.alpha=Math.min(1,p*5);break;
+    case 'fade':a.alpha=p;break;
+    case 'slideUp':a.dy=(1-easeOut(p))*fs*0.9;a.alpha=easeOut(p);break;
+    case 'slideDown':a.dy=-(1-easeOut(p))*fs*0.9;a.alpha=easeOut(p);break;
+    case 'slideLeft':a.dx=(1-easeOut(p))*fs*1.6;a.alpha=easeOut(p);break;
+    case 'slideRight':a.dx=-(1-easeOut(p))*fs*1.6;a.alpha=easeOut(p);break;
+    case 'zoom':a.scale=1.7-0.7*easeOut(p);a.alpha=p;break;
+    case 'shake':{const q=clamp((t-cue.start)/0.3,0,1),amp=(1-q)*fs*0.08;a.dx=Math.sin((t-cue.start)*70)*amp;a.dy=Math.cos((t-cue.start)*55)*amp*0.5;break}
+    case 'typewriter':a.chars=clamp((t-cue.start)/Math.max(0.15,Math.min(0.5,(cue.end-cue.start)*0.6)),0,1);break;
+  }
+  return a;
+}
+function hexRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255]}
+const rgba=(h,a)=>{const[r,g,b]=hexRgb(h);return`rgba(${r},${g},${b},${a})`};
+const contrast=h=>{const[r,g,b]=hexRgb(h);return(0.299*r+0.587*g+0.114*b)>150?'#111111':'#ffffff'};
+function rr(c,x,y,w,h,r){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+
+function paintWord(c,text,x,y,w,col,scale,sc,boxCol,fs,lineH){
+  c.save();
+  if(scale!==1){c.translate(x+w/2,y);c.scale(scale,scale);c.translate(-(x+w/2),-y)}
+  if(boxCol){c.fillStyle=boxCol;const pad=fs*0.14;rr(c,x-pad,y-lineH*0.46,w+pad*2,lineH*0.92,fs*0.22);c.fill()}
+  const ow=ST.outlineW*sc;
+  const useShadow=ST.shadowBlur>0||ST.shadowOff>0;
+  const setSh=()=>{if(useShadow){c.shadowColor=ST.shadow;c.shadowBlur=ST.shadowBlur*sc;c.shadowOffsetX=c.shadowOffsetY=ST.shadowOff*sc}};
+  const clrSh=()=>{c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetX=c.shadowOffsetY=0};
+  if(ow>0&&!boxCol){c.lineJoin='round';c.miterLimit=2;c.lineWidth=ow*2;c.strokeStyle=ST.outline;setSh();c.strokeText(text,x,y);clrSh();c.fillStyle=col;c.fillText(text,x,y)}
+  else{setSh();c.fillStyle=col;c.fillText(text,x,y);if(ST.shadowBlur>10){c.fillText(text,x,y)}clrSh()}
+  c.restore();
+}
+
+function drawSubs(c,W,H,t){
+  const cue=CUES.length?findCue(t):null;if(!cue)return;
+  const sc=Math.min(W,H)/1080,fs=ST.size*sc;
+  c.save();
+  c.font=`${ST.italic?'italic ':''}${ST.weight} ${fs}px ${FONTS[ST.font]}`;
+  c.textBaseline='middle';c.textAlign='left';
+  if('letterSpacing' in c)c.letterSpacing=(ST.ls*sc)+'px';
+  const loc=S.lang==='english'?'en-US':'tr-TR';
+  const full=cue.words.map(w=>ST.upper?w.w.toLocaleUpperCase(loc):w.w);
+  const a=animState(cue,t,fs);
+  const space=c.measureText(' ').width;
+  const ww=full.map(x=>c.measureText(x).width);
+  const maxW=W*0.9,per=Math.max(1,ST.maxWords|0||4);
+  const lines=[];let cur=[],cw=0;
+  full.forEach((x,i)=>{
+    if(cur.length&&(cur.length>=per||cw+space+ww[i]>maxW)){lines.push({idx:cur,w:cw});cur=[];cw=0}
+    cw+=(cur.length?space:0)+ww[i];cur.push(i);
+  });
+  if(cur.length)lines.push({idx:cur,w:cw});
+  let shown=full;
+  if(a.chars!=null){let left=Math.ceil(full.join('').length*a.chars);shown=full.map(x=>{const n=Math.max(0,Math.min(x.length,left));left-=x.length;return x.slice(0,n)})}
+  const lineH=fs*ST.lh,blockH=lines.length*lineH;
+  const cx=W/2;let cy=ST.y/100*H;cy=clamp(cy,blockH/2+H*0.03,H-blockH/2-H*0.03);
+  c.translate(cx+a.dx,cy+a.dy);c.scale(a.scale,a.scale);c.translate(-cx,-cy);c.globalAlpha=a.alpha;
+  let hi=-1;
+  if(S.mode==='dynamic'){for(let i=0;i<cue.words.length;i++){if(cue.words[i].s<=t)hi=i;else break}}
+  lines.forEach((ln,li)=>{
+    const y=cy-blockH/2+lineH*(li+0.5);let x=cx-ln.w/2;
+    if(ST.bgOp>0){const pad=fs*0.3;c.fillStyle=rgba(ST.bg,ST.bgOp);rr(c,x-pad,y-lineH*0.5,ln.w+pad*2,lineH,fs*0.25);c.fill()}
+    ln.idx.forEach(i=>{
+      let col=ST.color,scale=1,box=null;
+      if(S.mode==='dynamic'&&hi>=0){
+        if(ST.hlStyle==='progressive'&&i<=hi)col=ST.hl;
+        else if(i===hi&&ST.hlStyle!=='progressive'){
+          col=ST.hl;const q=clamp((t-cue.words[i].s)/0.14,0,1);scale=1+(ST.hlScale-1)*easeOut(q);
+          if(ST.hlStyle==='box'){box=ST.hl;col=contrast(ST.hl)}
+        }
+      }
+      if(shown[i])paintWord(c,shown[i],x,y,ww[i],col,scale,sc,box,fs,lineH);
+      x+=ww[i]+space;
+    });
+  });
+  c.restore();
+}
+
+function sizeOverlay(){
+  const w=$('#vwrap'),dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=Math.max(1,Math.round(w.clientWidth*dpr)),H=Math.max(1,Math.round(w.clientHeight*dpr));
+  if(ov.width!==W||ov.height!==H){ov.width=W;ov.height=H}
+}
+new ResizeObserver(()=>{sizeOverlay();redraw()}).observe($('#vwrap'));
+
+let lastActSeg=null;
+function redraw(){
+  sizeOverlay();octx.clearRect(0,0,ov.width,ov.height);
+  const t=video.currentTime||0;
+  if(S.segs.length)drawSubs(octx,ov.width,ov.height,t);
+  $('#time').textContent=fmt(t)+' / '+fmt(S.dur);
+  if(S.dur&&document.activeElement!==$('#scrub'))$('#scrub').value=Math.round(t/S.dur*1000);
+  const head=$('#tlHead');head.style.left=(t*S.pps)+'px';
+  const tl=$('#tl');
+  if(!video.paused){const x=t*S.pps;if(x>tl.scrollLeft+tl.clientWidth-40||x<tl.scrollLeft)tl.scrollLeft=Math.max(0,x-40)}
+  let act=null;for(const s of S.segs){if(t>=segS(s)&&t<segE(s)){act=s;break}}
+  if(act!==lastActSeg){lastActSeg=act;
+    $$('.blk').forEach(b=>b.classList.toggle('act',act&&+b.dataset.id===act.id));
+    $$('.seg').forEach(b=>b.classList.toggle('act',act&&+b.dataset.id===act.id));}
+}
+let raf=0;
+function loop(){redraw();if(!video.paused&&!video.ended)raf=requestAnimationFrame(loop)}
+video.addEventListener('play',()=>{$('#bPlay').textContent='❚❚ Duraklat';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)});
+video.addEventListener('pause',()=>{$('#bPlay').textContent='▶ Oynat';redraw()});
+video.addEventListener('ended',()=>{$('#bPlay').textContent='▶ Oynat';redraw()});
+['seeked','timeupdate','loadeddata'].forEach(ev=>video.addEventListener(ev,()=>{if(video.paused)redraw()}));
+$('#bPlay').onclick=()=>{video.paused?video.play().catch(()=>toast('Video oynatılamadı')):video.pause()};
+$('#bBack').onclick=()=>{video.currentTime=Math.max(0,video.currentTime-2)};
+$('#bFwd').onclick=()=>{video.currentTime=Math.min(S.dur,video.currentTime+2)};
+$('#scrub').addEventListener('input',e=>{video.currentTime=e.target.value/1000*S.dur});
+
+/* ================= Timeline ================= */
+function renderTimeline(){
+  const inner=$('#tlIn'),tl=$('#tl');
+  [...inner.children].forEach(c=>{if(c.id!=='tlHead')c.remove()});
+  const width=Math.max(tl.clientWidth,S.dur*S.pps+20);inner.style.width=width+'px';
+  const steps=[1,2,5,10,15,30,60,120,300];const step=steps.find(s=>s*S.pps>=70)||300;
+  for(let t=0;t<=S.dur;t+=step){const d=document.createElement('div');d.className='tick';d.style.left=(t*S.pps)+'px';
+    d.textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');inner.appendChild(d)}
+  S.segs.forEach(s=>{
+    const b=document.createElement('div');b.className='blk';b.dataset.id=s.id;
+    b.style.left=(segS(s)*S.pps)+'px';b.style.width=Math.max(6,(segE(s)-segS(s))*S.pps-1)+'px';
+    b.textContent=s.words.map(w=>w.w).join(' ');
+    b.onclick=ev=>{ev.stopPropagation();video.currentTime=segS(s)+0.01;const el=$(`.seg[data-id="${s.id}"]`);if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})};
+    inner.appendChild(b);
+  });
+  lastActSeg=null;
+}
+$('#tl').addEventListener('click',e=>{if(e.target.closest('.blk'))return;const r=$('#tlIn').getBoundingClientRect();video.currentTime=clamp((e.clientX-r.left)/S.pps,0,S.dur)});
+$('#zoom').addEventListener('input',e=>{S.pps=+e.target.value;renderTimeline();redraw()});
+
+/* ================= Editor ================= */
+function setSegTime(seg,ns,ne){
+  const os=segS(seg),oe=segE(seg),k=(oe>os)?(ne-ns)/(oe-os):1;
+  seg.words.forEach(w=>{w.s=ns+(w.s-os)*k;w.e=ns+(w.e-os)*k});
+  if(oe<=os){seg.words.forEach((w,i)=>{const d=(ne-ns)/seg.words.length;w.s=ns+d*i;w.e=ns+d*(i+1)})}
+}
+function setSegText(seg,text){
+  const toks=text.trim().split(/\s+/).filter(Boolean);
+  if(!toks.length){S.segs=S.segs.filter(s=>s!==seg);return}
+  const old=seg.words;
+  if(toks.length===old.length){toks.forEach((t,i)=>old[i].w=t);return}
+  const s=segS(seg),e=segE(seg),L=toks.map(t=>Math.max(1,t.length)),tot=L.reduce((a,b)=>a+b,0);let c=s;
+  seg.words=toks.map((t,i)=>{const d=(e-s)*L[i]/tot;const w={w:t,s:c,e:c+d};c+=d;return w});
+}
+function commit(){S.segs.sort((a,b)=>segS(a)-segS(b));renderEditor();rebuild();saveProjectSnapshot();}
+function renderEditor(){
+  const box=$('#segList');
+  if(!box) return;
+  const st=box.scrollTop;box.innerHTML='';
+  if(!S.segs.length){box.innerHTML='<p class="mut">Henüz altyazı yok. Önce “Altyazı Oluştur”a bas.</p>';return}
+  S.segs.forEach((seg,i)=>{
+    const d=document.createElement('div');d.className='seg';d.dataset.id=seg.id;
+    d.innerHTML=`<div class="segh"><b>#${i+1}</b>
+      <label>Başlangıç (sn)<input type="number" step="0.01" min="0" class="ts"></label>
+      <label>Bitiş (sn)<input type="number" step="0.01" min="0" class="te"></label>
+      <button class="mini play">▶</button></div>
+      <textarea rows="2" class="txt"></textarea>
+      <div class="acts"><button class="mini split">Böl</button><button class="mini merge">Sonrakiyle birleştir</button><button class="mini del">Sil</button></div>
+      <details><summary class="mut" style="cursor:pointer;font-size:12px">Kelime zamanları (${seg.words.length})</summary><div class="wt"></div></details>`;
+    $('.ts',d).value=segS(seg).toFixed(2);$('.te',d).value=segE(seg).toFixed(2);
+    $('.txt',d).value=seg.words.map(w=>w.w).join(' ');
+    $('.play',d).onclick=()=>{video.currentTime=segS(seg)+0.01;video.play().catch(()=>{})};
+    const tchg=()=>{const ns=parseFloat($('.ts',d).value),ne=parseFloat($('.te',d).value);
+      if(!(ns>=0)||!(ne>ns+0.05)){toast('Başlangıç, bitişten küçük olmalı');return commit()}
+      setSegTime(seg,ns,Math.min(ne,S.dur||ne));commit()};
+    $('.ts',d).onchange=tchg;$('.te',d).onchange=tchg;
+    $('.txt',d).onchange=e=>{setSegText(seg,e.target.value);commit()};
+    $('.split',d).onclick=()=>{
+      const n=seg.words.length;if(n<2)return toast('Bölmek için en az 2 kelime gerekir');
+      const t=video.currentTime;let k=Math.floor(n/2);
+      if(t>segS(seg)&&t<segE(seg)){const j=seg.words.findIndex(w=>w.s>t-0.02);if(j>0)k=j}
+      k=clamp(k,1,n-1);const a=seg.words.slice(0,k),b=seg.words.slice(k);
+      seg.words=a;S.segs.push(mkSeg(b));commit()};
+    $('.merge',d).onclick=()=>{const idx=S.segs.indexOf(seg),nx=S.segs[idx+1];if(!nx)return toast('Birleştirilecek sonraki altyazı yok');
+      seg.words=seg.words.concat(nx.words);S.segs=S.segs.filter(s=>s!==nx);commit()};
+    $('.del',d).onclick=()=>{S.segs=S.segs.filter(s=>s!==seg);commit()};
+    const det=$('details',d);
+    det.addEventListener('toggle',()=>{
+      if(!det.open)return;const wt=$('.wt',d);if(wt.childElementCount)return;
+      seg.words.forEach(w=>{
+        const a=document.createElement('input');a.type='text';a.value=w.w;
+        const b=document.createElement('input');b.type='number';b.step='0.01';b.value=w.s.toFixed(2);
+        const c=document.createElement('input');c.type='number';c.step='0.01';c.value=w.e.toFixed(2);
+        a.onchange=()=>{w.w=a.value.trim()||w.w;commit()};
+        b.onchange=()=>{const v=parseFloat(b.value);if(v>=0&&v<w.e){w.s=v}commit()};
+        c.onchange=()=>{const v=parseFloat(c.value);if(v>w.s){w.e=v}commit()};
+        wt.append(a,b,c);
+      });
+    });
+    box.appendChild(d);
+  });
+  box.scrollTop=st;lastActSeg=null;
+}
+
+/* ================= SRT / VTT ================= */
+function cueText(c){
+  const per=Math.max(1,ST.maxWords|0||4),ws=c.words.map(w=>w.w),lines=[];
+  for(let i=0;i<ws.length;i+=per)lines.push(ws.slice(i,i+per).join(' '));return lines.join('\n');
+}
+function ts(t,sep){t=Math.max(0,t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.round((t-Math.floor(t))*1000);
+  const p=(n,l=2)=>String(n).padStart(l,'0');return`${p(h)}:${p(m)}:${p(s)}${sep}${p(Math.min(ms,999),3)}`}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const baseName=()=>(S.file?S.file.name.replace(/\.[^.]+$/,''):'altyazi');
+const bindIfExists=(id,handler)=>{const el=$('#'+id); if(el) el.onclick=handler;};
+bindIfExists('bSrt',()=>download(baseName()+'.srt',CUES.map((c,i)=>`${i+1}\n${ts(c.start,',')} --> ${ts(c.end,',')}\n${cueText(c)}\n`).join('\n'),'application/x-subrip'));
+bindIfExists('bVtt',()=>download(baseName()+'.vtt','WEBVTT\n\n'+CUES.map((c,i)=>`${i+1}\n${ts(c.start,'.')} --> ${ts(c.end,'.')}\n${cueText(c)}\n`).join('\n'),'text/vtt'));
+bindIfExists('bProjectSave',saveProjectSnapshot);
+bindIfExists('bProjectExport',exportProjectSnapshot);
+bindIfExists('bProjectImport',()=>{const input=$('#projectFile'); if(input) input.click();});
+const projectInput=$('#projectFile'); if(projectInput) projectInput.onchange=()=>importProjectSnapshot(projectInput.files[0]);
+bindIfExists('aiAnalyze',()=>renderAIInsights());
+bindIfExists('aiPolish',smartPolishSegments);
+bindIfExists('aiTiming',smartTimingBoost);
+bindIfExists('aiDensity',smartDensityTune);
+bindIfExists('aiStyle',applyAIStyleSuggestion);
+bindIfExists('aiFull',fullAutoOptimize);
+
+/* ================= Upload ================= */
+const drop=$('#drop'),fileIn=$('#file');
+drop.addEventListener('click',e=>{if(!e.target.closest('input'))fileIn.click()});
+fileIn.addEventListener('change',()=>loadFile(fileIn.files[0]));
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
+
+function loadFile(f){
+  if(!f)return;
+  if(S.exporting||S.busy)return toast('İşlem bitmeden yeni video seçilemez');
+  if(!/^video\//.test(f.type)&&!/\.(mp4|webm|mov|m4v)$/i.test(f.name))return toast('Lütfen MP4, WebM veya MOV seç');
+  if(S.url)URL.revokeObjectURL(S.url);
+  S.file=f;S.url=URL.createObjectURL(f);S.segs=[];S.approx=false;CUES=[];S.dur=0;
+  $('#status').hidden=true;$('#exResult').innerHTML='';
+  video.src=S.url;
+  video.onloadedmetadata=()=>{
+    S.dur=video.duration;S.vw=video.videoWidth;S.vh=video.videoHeight;
+    if(!S.vw){toast('Bu dosyada görüntü bulunamadı');return}
+    $('#vwrap').style.setProperty('--ar',S.vw/S.vh);
+    $('#info').innerHTML=[`Süre: ${fmt(S.dur).replace(/\.\d$/,'')}`,`Çözünürlük: ${S.vw}×${S.vh}`,`Boyut: ${mb(f.size)} MB`,f.name].map(t=>`<span class="chip">${t}</span>`).join('');
+    drop.classList.add('compact');drop.querySelector('big').textContent='Videoyu değiştir';
+    drop.querySelector('span.mut').textContent='';
+    $('#work').classList.add('on');
+    ST.y=undefined;applyStyle(ST.font?currentStyleName():'TikTok');
+    renderEditor();renderTimeline();rebuild();updateModeUi();
+    updateProjectSummary();
+    if(f.size>1.5*1024**3||S.dur>1200)toast('Uzun/büyük video: mobil cihazlarda bellek yetmeyebilir',5000);
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  video.onerror=()=>{
+    const e=video.error;
+    const names={1:'yükleme iptal edildi',2:'ağ hatası',3:'görüntü çözülemedi',4:'kaynak desteklenmiyor ya da engellendi'};
+    const detail=e?`Hata ${e.code}: ${names[e.code]||'bilinmiyor'}`:'Bilinmeyen hata';
+    const embedded=location.hostname.includes('claude.ai')||location.protocol==='blob:'||location.protocol==='about:';
+    const hint=embedded
+      ?'Bu sayfa Claude içinde kısıtlı çalışıyor; dosya seçimi, model indirme ve kayıt engellenebilir. HTML dosyasını indirip doğrudan Chrome’da aç.'
+      :'Videoyu MP4 (H.264/AAC) olarak dene.';
+    $('#info').innerHTML=`<span class="chip">${detail}</span><span class="chip">Tür: ${f.type||'bilinmiyor'}</span><span class="chip">Boyut: ${mb(f.size)} MB</span>`;
+    toast(`Video açılamadı. ${detail}. ${hint}`,9000);
+  };
+}
+let _sn='TikTok';
+function currentStyleName(){return _sn}
+const _apply=applyStyle;
+applyStyle=function(n){_sn=n;_apply(n)};
+
+function updateProjectSummary(){
+  const totalWords = S.segs.reduce((sum, seg) => sum + seg.words.length, 0);
+  const totalTime = S.segs.reduce((sum, seg) => sum + Math.max(0, segE(seg) - segS(seg)), 0);
+  const text = S.segs.length
+    ? `${S.segs.length} bölüm · ${totalWords} kelime · ${fmt(totalTime)} toplam süre · ${S.file ? S.file.name : 'yerel proje'}`
+    : 'Henüz altyazı yok. Ses tanıma yapıp düzenlemeye başlayabilirsiniz.';
+  const box = $('#projectSummary');
+  const label = $('#projectSummaryText');
+  if (box) {
+    box.hidden = false;
+    label.textContent = text;
+  }
+  renderAIInsights();
+}
+
+function analyzeTranscriptQuality(){
+  if (!S.segs.length) return { score: 0, summary: 'Metin yok', advice: 'Önce konuşma tanıma çalıştırın.', speed: 'beklemede', fillerCount: 0, totalWords: 0, density: 0 };
+  const words = S.segs.flatMap(seg => seg.words.map(w => String(w.w || '').trim())).filter(Boolean);
+  const totalWords = words.length;
+  const totalTime = S.segs.reduce((sum, seg) => sum + Math.max(0.2, segE(seg) - segS(seg)), 0);
+  const avgWordsPerSecond = totalWords / Math.max(totalTime, 1);
+  const avgLen = words.reduce((sum, w) => sum + w.length, 0) / Math.max(totalWords, 1);
+  const fillerWords = ['uh','um','hmm','eh','aa','aaa','mmm','like'];
+  const fillerCount = words.filter(w => fillerWords.includes(w.toLowerCase().replace(/[^a-zçğşıöü]/gi, ''))).length;
+  let score = 100;
+  score -= Math.max(0, Math.abs(avgWordsPerSecond - 2.2) * 18);
+  score -= Math.max(0, avgLen - 9) * 2.5;
+  score -= fillerCount * 5;
+  score = clamp(Math.round(score), 0, 100);
+  const summary = score >= 80 ? 'Yüksek okunabilirlik' : score >= 60 ? 'İyi akış, biraz incelenecek' : 'Daha fazla düzenleme gerekiyor';
+  const speed = avgWordsPerSecond > 3 ? 'hızlı akış' : avgWordsPerSecond > 1.5 ? 'doğal akış' : 'yavaş akış';
+  const density = clamp(Math.round((totalWords / Math.max(1, S.segs.length)) * 10) / 10, 0, 20);
+  const advice = fillerCount ? 'Filler kelimeler temizlenebilir.' : 'Akış doğal görünüyor. Stil ve zamanlama iyileştirilebilir.';
+  return { score, summary, advice, speed, fillerCount, totalWords, avgWordsPerSecond, avgLen, density };
+}
+
+function suggestStyleByContent(){
+  if (!S.segs.length) return 'Classic';
+  const text = S.segs.map(seg => seg.words.map(w => w.w).join(' ')).join(' ').toLowerCase();
+  const rules = [
+    ['gaming','action','fps','match','live','team','battle','stream'],
+    ['meme','funny','lol','haha','wow','epic'],
+    ['youtube','shorts','viral','trending','viral'],
+    ['tutorial','learn','guide','step','how'],
+    ['cinematic','movie','scene','dramatic','story'],
+    ['neon','tech','future','digital','innovation']
+  ];
+  const headings = ['Gaming','Meme','YouTube Shorts','Clean','Cinematic','Neon'];
+  const presets = { Gaming: 'Gaming', Meme: 'Meme', 'YouTube Shorts': 'YouTube Shorts', Clean: 'Clean', Cinematic: 'Cinematic', Neon: 'Neon' };
+  for (let i = 0; i < rules.length; i++) {
+    const matches = rules[i].some(keyword => text.includes(keyword));
+    if (matches) return presets[headings[i]] || 'Classic';
+  }
+  return text.length > 160 ? 'Dynamic' : 'Classic';
+}
+
+function renderAIInsights(){
+  const box = $('#aiInsights');
+  if (!box) return;
+  const info = analyzeTranscriptQuality();
+  if (!S.segs.length) {
+    box.innerHTML = '<div class="note">Yerel AI analizi için önce altyazı oluşturun.</div>';
+    return;
+  }
+  const style = suggestStyleByContent();
+  const densityText = `${info.density} satır/segment`;
+  const quickTips = [];
+  if (info.fillerCount) quickTips.push('Filler kelimeler temizlenebilir.');
+  if (info.avgWordsPerSecond > 3.2) quickTips.push('Akış hızlı; daha geniş segmente geçebilirsiniz.');
+  if (info.avgWordsPerSecond < 1.4) quickTips.push('Akış yavaş; zamanlama ve yoğunluk biraz sıkıştırılabilir.');
+  if (!quickTips.length) quickTips.push('Akış doğal görünüyor; stil ve vurgulama için hazır.');
+  const tips = quickTips.slice(0, 3).join(' • ');
+  box.innerHTML = `
+    <div class="chips">
+      <span class="chip">AI skoru: ${info.score}/100</span>
+      <span class="chip">${info.summary}</span>
+      <span class="chip">Hız: ${info.speed}</span>
+      <span class="chip">Yoğunluk: ${densityText}</span>
+      <span class="chip">Stil önerisi: ${style}</span>
+    </div>
+    <div class="note" style="margin-top:8px">${info.advice} • ${tips} • ${info.totalWords} kelime • ${Math.max(1, S.segs.length)} segment</div>
+  `;
+}
+
+function smartPolishSegments(){
+  if (!S.segs.length) return toast('Önce altyazı oluşturulmalı.');
+  S.segs = S.segs.map(seg => {
+    const cleaned = seg.words
+      .map(w => ({ ...w, w: String(w.w || '').replace(/\s+/g, ' ').trim() }))
+      .filter(w => w.w && !/^(uh|um|hmm|eh|aa|aaa|mmm)$/i.test(w.w));
+    if (!cleaned.length) return seg;
+    cleaned[0].w = cleaned[0].w.replace(/^[^A-Za-z0-9ÇçĞğİıÖöŞşÜü]+/, '');
+    const last = cleaned[cleaned.length - 1];
+    if (last && !/[.!?…]$/.test(last.w)) last.w += '.';
+    return { ...seg, words: cleaned };
+  }).filter(seg => seg.words.length > 0);
+  commit();
+  renderAIInsights();
+  toast('AI metin temizleme uygulandı');
+}
+
+function smartTimingBoost(){
+  if (!S.segs.length) return toast('Önce altyazı oluşturulmalı.');
+  S.segs = S.segs.map(seg => {
+    const start = segS(seg);
+    const raw = segE(seg) - start;
+    const words = seg.words.length || 1;
+    const tuned = clamp(raw * (1.12 - (words / 40) * 0.15), 0.45, 3.8);
+    const end = start + tuned;
+    seg.words.forEach((w, i) => {
+      const p = words > 1 ? i / (words - 1) : 0;
+      w.s = start + p * tuned * 0.55;
+      w.e = start + (p + (1 / Math.max(words, 1)) * 0.9) * tuned;
+      if (i === words - 1) w.e = end;
+    });
+    return seg;
+  });
+  commit();
+  renderAIInsights();
+  toast('AI zamanlama optimize edildi');
+}
+
+function smartDensityTune(){
+  if (!S.segs.length) return toast('Önce altyazı oluşturulmalı.');
+  const target = clamp(Math.max(2, Math.round((S.segs.reduce((n, seg) => n + seg.words.length, 0) / Math.max(1, S.segs.length)) / 2)), 2, 6);
+  const next = [];
+  for (const seg of S.segs) {
+    const words = seg.words || [];
+    if (!words.length || words.length <= target) {
+      next.push(seg);
+      continue;
+    }
+    const span = Math.max(segE(seg) - segS(seg), 0.35);
+    const groups = [];
+    for (let i = 0; i < words.length; i += target) groups.push(words.slice(i, i + target));
+    let cursor = segS(seg);
+    for (let gi = 0; gi < groups.length; gi++) {
+      const group = groups[gi];
+      const pieceStart = cursor;
+      const pieceEnd = gi === groups.length - 1 ? segE(seg) : segS(seg) + ((gi + 1) / groups.length) * span;
+      const tunedGroup = group.map((w, idx) => {
+        const localStart = pieceStart + ((pieceEnd - pieceStart) * idx) / Math.max(1, group.length);
+        const localEnd = pieceStart + ((pieceEnd - pieceStart) * (idx + 1)) / Math.max(1, group.length);
+        return { ...w, s: localStart, e: localEnd };
+      });
+      next.push({ id: segIdSeq++, words: tunedGroup });
+      cursor = pieceEnd;
+    }
+  }
+  S.segs = next;
+  commit();
+  renderAIInsights();
+  toast('AI yoğunluk ayarı uygulandı');
+}
+
+function applyAIStyleSuggestion(){
+  const style = suggestStyleByContent();
+  applyStyle(style);
+  toast('AI stil önerisi uygulandı: ' + style);
+}
+
+function fullAutoOptimize(){
+  if (!S.segs.length) return toast('Önce altyazı oluşturulmalı.');
+  try {
+    smartPolishSegments();
+    smartTimingBoost();
+    smartDensityTune();
+    applyAIStyleSuggestion();
+    renderAIInsights();
+    toast('AI full optimize tamamlandı');
+  } catch (err) {
+    console.warn('AI full optimize failed', err);
+    toast('AI tam optimize sırasında hata oluştu');
+  }
+}
+
+function saveProjectSnapshot(){
+  if (!('localStorage' in window)) return toast('Bu tarayıcıda yerel depolama desteklenmiyor.');
+  const snapshot = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    fileName: S.file ? S.file.name : '',
+    videoDuration: S.dur,
+    mode: S.mode,
+    group: S.group,
+    lang: S.lang,
+    styleName: currentStyleName(),
+    settings: ST,
+    segs: S.segs
+  };
+  localStorage.setItem('altbalt-project-snapshot', JSON.stringify(snapshot));
+  updateProjectSummary();
+  toast('Proje otomatik olarak kaydedildi');
+}
+
+function exportProjectSnapshot(){
+  const snapshot = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    fileName: S.file ? S.file.name : '',
+    videoDuration: S.dur,
+    mode: S.mode,
+    group: S.group,
+    lang: S.lang,
+    styleName: currentStyleName(),
+    settings: ST,
+    segs: S.segs
+  };
+  download((S.file ? S.file.name.replace(/\.[^.]+$/, '') : 'altyazi') + '-projesi.json', JSON.stringify(snapshot, null, 2), 'application/json');
+}
+
+function restoreSavedProject(){
+  if (!('localStorage' in window)) return false;
+  const raw = localStorage.getItem('altbalt-project-snapshot');
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.segs)) return false;
+    S.segs = parsed.segs;
+    S.mode = parsed.mode || 'dynamic';
+    S.group = parsed.group || 'auto';
+    S.lang = parsed.lang || 'turkish';
+    if (parsed.styleName) applyStyle(parsed.styleName);
+    if (parsed.settings) ST = { ...ST, ...parsed.settings };
+    CUES = buildCues();
+    renderEditor();
+    rebuild();
+    updateModeUi();
+    updateProjectSummary();
+    toast('Kaydedilmiş proje yüklendi');
+    return true;
+  } catch (err) {
+    console.warn('Saved project restore failed', err);
+    return false;
+  }
+}
+
+function importProjectSnapshot(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result));
+      if (!parsed || !Array.isArray(parsed.segs)) throw new Error('Geçersiz proje dosyası');
+      S.segs = parsed.segs;
+      S.mode = parsed.mode || S.mode;
+      S.group = parsed.group || S.group;
+      S.lang = parsed.lang || S.lang;
+      if (parsed.styleName) applyStyle(parsed.styleName);
+      if (parsed.settings) ST = { ...ST, ...parsed.settings };
+      syncControls();
+      renderEditor();
+      rebuild();
+      updateModeUi();
+      updateProjectSummary();
+      toast('JSON projesi içe aktarıldı');
+    } catch (err) {
+      toast('Proje dosyası okunamadı');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ================= Status helpers ================= */
+function setStatus(prefix,msg,o={}){
+  const box=$('#'+prefix),m=$('#'+(prefix==='status'?'stMsg':'exMsg')),sub=$('#'+(prefix==='status'?'stSub':'exSub')),bar=$('#'+(prefix==='status'?'stBar':'exBar'));
+  if(!box) return;
+  box.hidden=false;box.classList.toggle('err',!!o.err);
+  if(m) m.textContent=msg;
+  if(sub) sub.textContent=o.sub||'';
+  if(bar){
+    const fill = bar.firstElementChild;
+    if(o.bar==null){bar.classList.add('ind');if(fill) fill.style.width='';}
+    else{bar.classList.remove('ind');if(fill) fill.style.width=(o.bar*100).toFixed(1)+'%'}
+  }
+}
+
+/* ================= Speech-to-text ================= */
+let worker=null,pending=null,onProg=null;
+function getWorker(){
+  if(worker)return worker;
+  const src=$('#workerSrc').textContent;
+  worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})),{type:'module'});
+  worker.onmessage=e=>{
+    const m=e.data;
+    if(m.type==='progress'){if(onProg)onProg(m.p);return}
+    if(!pending)return;const p=pending;pending=null;
+    if(m.type==='error')p.rej(new Error(m.message));else p.res(m);
+  };
+  worker.onerror=e=>{const p=pending;pending=null;worker=null;if(p)p.rej(new Error('Çalışan başlatılamadı: '+(e.message||'bilinmeyen hata')))};
+  return worker;
+}
+const callWorker=(msg,tr)=>new Promise((res,rej)=>{pending={res,rej};try{getWorker().postMessage(msg,tr||[])}catch(e){pending=null;rej(e)}});
+
+/* Yedek: arka plan işlemi başlamazsa model doğrudan sayfada çalışır */
+let useMain=false,mainAsr=null,mainName=null;
+async function loadMain(model){
+  if(mainAsr&&mainName===model)return;
+  const mod=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+  mod.env.allowLocalModels=false;
+  mainAsr=await mod.pipeline('automatic-speech-recognition',model,{progress_callback:p=>{if(onProg)onProg(p)}});
+  mainName=model;
+}
+async function runMain(audio,lang){
+  const base={chunk_length_s:30,stride_length_s:5,task:'transcribe'};if(lang)base.language=lang;
+  await new Promise(r=>setTimeout(r,50));
+  try{const o=await mainAsr(audio,{...base,return_timestamps:'word'});return{kind:'word',chunks:o.chunks||[]}}
+  catch(e){const o=await mainAsr(audio,{...base,return_timestamps:true});return{kind:'segment',chunks:o.chunks||[]}}
+}
+async function extractAudio(file){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ctx=new AC();let dec;
+  try{dec=await ctx.decodeAudioData(await file.arrayBuffer())}
+  catch(e){ctx.close();throw new Error('decode')}
+  ctx.close();
+  const off=new OfflineAudioContext(1,Math.max(1,Math.ceil(dec.duration*16000)),16000);
+  const src=off.createBufferSource();src.buffer=dec;src.connect(off.destination);src.start();
+  const r=await off.startRendering();
+  return new Float32Array(r.getChannelData(0));
+}
+function wordsFromChunks(chunks,kind){
+  const out=[];
+  chunks.forEach(c=>{
+    const text=(c.text||'').trim();if(!text)return;
+    const [s0,e0]=c.timestamp||[0,null];
+    if(kind==='word'){out.push({w:text,s:s0??0,e:e0})}
+    else{
+      const toks=text.split(/\s+/).filter(Boolean),s=s0??0,e=e0??(s+toks.length*0.35),L=toks.map(t=>Math.max(1,t.length)),tot=L.reduce((a,b)=>a+b,0);let cur=s;
+      toks.forEach((t,i)=>{const d=(e-s)*L[i]/tot;out.push({w:t,s:cur,e:cur+d});cur+=d});
+    }
+  });
+  for(let i=0;i<out.length;i++){
+    const w=out[i],n=out[i+1];
+    if(w.e==null||w.e<=w.s)w.e=n?Math.min(n.s>w.s?n.s:w.s+0.35,w.s+0.6):w.s+0.35;
+    if(n&&n.s>w.s&&w.e>n.s)w.e=n.s;
+  }
+  return out.filter(w=>isFinite(w.s)&&isFinite(w.e));
+}
+
+function getModelPriority(selectedModel){
+  return selectedModel?[selectedModel]:['Xenova/whisper-tiny'];
+}
+
+function scoreRecognitionResult(words,durationSeconds){
+  if(!words || !words.length) return 0;
+  const duration=Math.max(1,Number(durationSeconds)||1);
+  const totalWords=words.length;
+  const wordDensity=totalWords/duration;
+  const textualLoad=words.reduce((sum,w)=>sum+(w.w?String(w.w).length:0),0)/Math.max(duration,1);
+  return totalWords*0.8 + wordDensity*8 + textualLoad*2;
+}
+
+async function runRecognitionWithModel(modelName,audio,lang){
+  const dl={};const tD=performance.now();let lastB=0,lastT=tD,speed=0,gotAny=false,note='';
+  const totals=()=>{const f=Object.values(dl);return{tot:f.reduce((a,b)=>a+b.total,0),ld:f.reduce((a,b)=>a+b.loaded,0)};};
+  const render=()=>{
+    const {tot,ld}=totals(),secs=Math.round((performance.now()-tD)/1000);
+    if(tot>0&&ld<tot){gotAny=true;
+      setStatus('status',`Model yükleniyor: ${modelName}...`,{bar:ld/tot,sub:`${mb(ld)} / ${mb(tot)} MB (%${Math.round(ld/tot*100)})${speed>0?' · '+speed.toFixed(1)+' MB/sn':''} · ${secs} sn${note}`})}
+    else if(gotAny||(tot>0&&ld>=tot))setStatus('status',`Model hazır: ${modelName}`,{sub:`${secs} sn${note}`});
+    else setStatus('status',`Model hazırlanıyor: ${modelName}...`,{sub:`${secs} sn · henüz veri gelmedi`+(secs>20?' — bağlantı yok ya da engelleniyor olabilir':'')+note});
+  };
+  onProg=p=>{
+    if(p.file&&(p.status==='progress'||p.status==='download'||p.status==='initiate'||p.status==='done')){
+      const d=dl[p.file]||(dl[p.file]={loaded:0,total:0});
+      if(p.total){d.total=p.total}
+      if(p.status==='progress'&&p.loaded!=null){d.loaded=p.loaded}
+      if(p.status==='done'){d.loaded=d.total}
+    }
+    const now=performance.now();
+    if(now-lastT>=1000){const {ld}=totals();speed=Math.max(0,(ld-lastB)/1048576/((now-lastT)/1000));lastB=ld;lastT=now}
+    render();
+  };
+  render();const rt=setInterval(render,1000);
+  try{
+    if(useMain)await loadMain(modelName);
+    else{
+      try{await callWorker({type:'load',model:modelName})}
+      catch(e){
+        if(!String(e.message).includes('Çalışan başlatılamadı'))throw e;
+        useMain=true;note=' · arka plan işlemi başlamadı, doğrudan sayfada çalışıyor (ekran bir süre donabilir)';
+        render();await loadMain(modelName);
+      }
+    }
+    return useMain?await runMain(audio,lang):await callWorker({type:'run',audio,lang},[audio.buffer]);
+  } finally {
+    clearInterval(rt);
+    onProg=null;
+  }
+}
+
+async function generate(){
+  if(S.busy||!S.file)return;
+  if(S.segs.length&&!confirm('Mevcut altyazılar ve düzenlemeler silinecek. Devam edilsin mi?'))return;
+  if(typeof WebAssembly==='undefined'||typeof Worker==='undefined'){
+    return setStatus('status','Bu cihazda yerel konuşma modeli çalıştırılamıyor.',{err:true,sub:'Tarayıcı WebAssembly veya Web Worker desteklemiyor.'});
+  }
+  S.busy=true;syncButtons();document.body.classList.add('exporting');
+  let timer=null;const phaseT=()=>performance.now();
+  const startTimer=(msg,extra='')=>{stopTimer();const t0=phaseT();
+    const tick=()=>setStatus('status',msg,{sub:`${extra}${extra?' · ':''}Geçen süre: ${Math.round((phaseT()-t0)/1000)} sn`});tick();timer=setInterval(tick,500)};
+  const stopTimer=()=>{if(timer){clearInterval(timer);timer=null}};
+  try{
+    video.pause();
+    startTimer('Ses analiz ediliyor...','Video sesi çözülüp 16 kHz mono formata çevriliyor');
+    const audio=await extractAudio(S.file);
+    stopTimer();
+
+    const lang=S.lang==='auto'?null:S.lang;
+    const selectedModel=$('#model').value;
+    const modelPriority=getModelPriority(selectedModel);
+    const audioDuration=Math.max(1, S.dur || audio.length/16000);
+    let lastErr=null;
+    let bestCandidate=null;
+    let finalResult=null;
+
+    for (const modelName of modelPriority) {
+      $('#model').value=modelName;
+      try{
+        const res=await runRecognitionWithModel(modelName,audio,lang);
+        const words=wordsFromChunks(res.chunks,res.kind);
+        const score=scoreRecognitionResult(words,audioDuration);
+        if(words.length){
+          const candidate={res,words,score,modelName};
+          if(!bestCandidate || score>bestCandidate.score) bestCandidate=candidate;
+          if(score>25) {
+            finalResult=candidate;
+            break;
+          }
+        }
+        lastErr=new Error('empty');
+      }catch(err){
+        lastErr=err;
+      }
+    }
+
+    if(!bestCandidate){
+      throw lastErr || new Error('empty');
+    }
+    const selectedBest = finalResult || bestCandidate;
+    const finalModel = selectedBest.modelName || $('#model').value;
+    $('#model').value=finalModel;
+    const {res,words}=selectedBest;
+    S.approx=res.kind!=='word';
+    S.segs=buildSegments(words);
+    renderEditor();rebuild();
+    setStatus('status',`Hazır: ${words.length} kelime (${finalModel}).`,{bar:1,sub:S.approx?'Bu modelde kelime zamanları alınamadı; kelimeler her ifadenin içinde tahmini olarak dağıtıldı.':'Kelime bazlı zamanlamalar alındı.'});
+    video.currentTime=0;
+    renderAIInsights();
+  }catch(err){
+    stopTimer();onProg=null;
+    const m=String(err&&err.message||err);
+    if(m==='decode')setStatus('status','Videodaki ses çözülemedi.',{err:true,sub:'Videoda ses olmayabilir ya da tarayıcı bu ses biçimini çözemiyor. MP4 (AAC) ya da WebM dene.'});
+    else if(m==='empty')setStatus('status','Konuşma algılanamadı.',{err:true,sub:'Dil seçimini kontrol et veya daha büyük bir model dene.'});
+    else setStatus('status','Bu cihazda yerel konuşma modeli çalıştırılamıyor. Daha kısa bir video veya daha düşük kalite deneyin.',{err:true,sub:'Ayrıntı: '+m.slice(0,200)+' — İnternet bağlantını da kontrol et (model ilk seferde indirilir).'});
+  }finally{
+    S.busy=false;document.body.classList.remove('exporting');syncButtons();
+  }
+}
+const btnGen=$('#btnGen'); if(btnGen) btnGen.onclick=generate;
+
+/* ================= Export (burned-in) ================= */
+const mimeCands=['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+let abortExport=false;
+function syncButtons(){
+  const has=S.segs.length>0&&!S.busy&&!S.exporting;
+  const btnGen=$('#btnGen'), bSrt=$('#bSrt'), bVtt=$('#bVtt'), bExp=$('#bExp'), bCancel=$('#bCancel');
+  if(btnGen) btnGen.disabled=!S.file||!S.dur||S.busy||S.exporting;
+  if(bSrt) bSrt.disabled=!has; if(bVtt) bVtt.disabled=!has;
+  if(bExp){ bExp.disabled=!has||typeof MediaRecorder==='undefined'; if(typeof MediaRecorder==='undefined') bExp.title='Bu tarayıcı video kaydını (MediaRecorder) desteklemiyor'; }
+  if(bCancel) bCancel.hidden=!S.exporting;
+}
+async function exportVideo(){
+  if(S.exporting||!S.segs.length)return;
+  if(typeof MediaRecorder==='undefined'||!HTMLCanvasElement.prototype.captureStream)
+    return setStatus('exStatus','Bu tarayıcı video dışa aktarmayı desteklemiyor.',{err:true,sub:'Chrome, Edge veya güncel Safari dene. SRT/VTT yine indirilebilir.'});
+  const mime=mimeCands.find(m=>MediaRecorder.isTypeSupported(m));
+  if(!mime)return setStatus('exStatus','Bu tarayıcıda uygun video kayıt biçimi yok.',{err:true,sub:'SRT/VTT indirebilirsin.'});
+  S.exporting=true;abortExport=false;syncButtons();document.body.classList.add('exporting');$('#exResult').innerHTML='';
+  let wake=null,rec=null,g=null;
+  const finishCleanup=()=>{
+    S.exporting=false;document.body.classList.remove('exporting');
+    if(g){try{g.src.disconnect();g.src.connect(g.ac.destination)}catch(e){}}
+    video.pause();video.currentTime=0;if(wake){try{wake.release()}catch(e){}}
+    syncButtons();redraw();
+  };
+  try{
+    setStatus('exStatus','Video oluşturuluyor...',{sub:'Hazırlanıyor'});
+    try{if(navigator.wakeLock)wake=await navigator.wakeLock.request('screen')}catch(e){}
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    video.pause();video.currentTime=0;
+    await new Promise(r=>{const h=()=>{video.removeEventListener('seeked',h);r()};video.addEventListener('seeked',h);video.currentTime=0;setTimeout(r,400)});
+
+    const k=Math.min(1,1920/Math.max(S.vw,S.vh));
+    const W=Math.max(2,Math.round(S.vw*k/2)*2),H=Math.max(2,Math.round(S.vh*k/2)*2);
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+    const stream=cv.captureStream(30);
+
+    if(!S.audioGraph){
+      const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();
+      S.audioGraph={ac,src:ac.createMediaElementSource(video),dest:ac.createMediaStreamDestination()};
+    }
+    g=S.audioGraph;g.src.disconnect();g.src.connect(g.dest);await g.ac.resume();
+    g.dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+
+    const chunks=[];
+    rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:Math.round(clamp(W*H*30*0.12,2e6,12e6)),audioBitsPerSecond:128000});
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    const stopped=new Promise(r=>rec.onstop=r);
+
+    const draw=t=>{c.drawImage(video,0,0,W,H);drawSubs(c,W,H,t)};
+    let stopFlag=false;
+    const upd=()=>setStatus('exStatus','Video oluşturuluyor...',{bar:S.dur?clamp(video.currentTime/S.dur,0,1):0,
+      sub:`${fmt(video.currentTime)} / ${fmt(S.dur)} · Gerçek zamanlı kaydediliyor`+(document.hidden?' · SEKME ARKA PLANDA: kayıt duraksayabilir':'')});
+    const tick=(now,meta)=>{
+      if(stopFlag)return;
+      draw(meta&&meta.mediaTime!=null?meta.mediaTime:video.currentTime);upd();
+      if(!video.ended&&!abortExport)schedule();
+    };
+    const schedule=()=>video.requestVideoFrameCallback?video.requestVideoFrameCallback(tick):requestAnimationFrame(tick);
+    const ended=new Promise(r=>video.addEventListener('ended',r,{once:true}));
+
+    draw(0);rec.start(1000);
+    video.muted=false;video.playbackRate=1;
+    await video.play();schedule();
+    await Promise.race([ended,new Promise(r=>{const i=setInterval(()=>{if(abortExport){clearInterval(i);r()}},200)})]);
+    stopFlag=true;
+    if(!abortExport){draw(S.dur);await new Promise(r=>setTimeout(r,350))}
+    if(rec.state!=='inactive')rec.stop();
+    await stopped;stream.getTracks().forEach(t=>t.stop());
+
+    if(abortExport){setStatus('exStatus','Dışa aktarma iptal edildi.',{bar:0});return}
+    const isMp4=rec.mimeType.includes('mp4')||mime.includes('mp4');
+    const blob=new Blob(chunks,{type:isMp4?'video/mp4':'video/webm'});
+    const url=URL.createObjectURL(blob);
+    const name=baseName()+'-altyazili.'+(isMp4?'mp4':'webm');
+    setStatus('exStatus','Dışa aktarma tamamlandı.',{bar:1,sub:`${mb(blob.size)} MB · ${isMp4?'MP4 (H.264/AAC)':'WebM — bu tarayıcı MP4 kaydını desteklemiyor'}`});
+    $('#exResult').innerHTML=`<a download="${name}" href="${url}"><button class="primary" style="width:100%">${name} indir</button></a><video src="${url}" controls playsinline style="width:100%;margin-top:8px;border-radius:8px;max-height:50vh"></video>`;
+  }catch(err){
+    setStatus('exStatus','Video oluşturulamadı.',{err:true,sub:String(err&&err.message||err).slice(0,200)});
+  }finally{finishCleanup()}
+}
+bindIfExists('bExp',exportVideo); bindIfExists('bCancel',()=>{abortExport=true});
+document.addEventListener('visibilitychange',()=>{if(S.exporting&&document.hidden)toast('Sekme arka planda: dışa aktarma duraksayabilir',4000)});
+document.addEventListener('keydown',(event)=>{
+  const targetTag=(event.target&&event.target.tagName||'').toLowerCase();
+  const modifier=event.ctrlKey||event.metaKey;
+  if(modifier && event.key.toLowerCase()==='s'){event.preventDefault(); saveProjectSnapshot();}
+  if(modifier && event.key.toLowerCase()==='o'){event.preventDefault(); const input=$('#projectFile'); if(input) input.click();}
+  if(event.code==='Space' && !(targetTag==='input' || targetTag==='textarea' || targetTag==='select')){
+    event.preventDefault();
+    if(video){ if(video.paused) video.play().catch(()=>{}); else video.pause(); }
+  }
+  if(event.key==='Escape' && S.exporting){abortExport=true;}
+});
+
+/* ================= Init ================= */
+applyStyle('TikTok');updateModeUi();syncButtons();
+updateProjectSummary();
+restoreSavedProject();
+window.addEventListener('resize',()=>{renderTimeline();redraw()});
+})();
+</script>
+</body>
+</html>
