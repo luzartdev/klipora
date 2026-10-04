@@ -1,20 +1,21 @@
 # Klipora
 
-Klipora, videolara tarayıcı içinde altyazı oluşturmak, düzenlemek ve dışa aktarmak için yerel çalışan bir altyazı stüdyosudur.
+Klipora is an on-device subtitle studio for creating, editing, and exporting video captions in your browser.
 
-## Özellikler
+## Features
 
-- Whisper tabanlı, cihaz üzerinde çalışan konuşma tanıma
-- Cümle, kelime grubu, tek kelime ve dinamik karaoke altyazıları
-- Zaman çizelgesi, kelime zamanlaması düzenleme ve hazır tipografi stilleri
-- SRT, VTT, JSON proje ve altyazısı videoya işlenmiş video dışa aktarma
-- Proje ayarlarını tarayıcıda yerel olarak saklama
-- GitHub Pages ile statik yayın; uygulama sunucusu veya derleme adımı gerektirmez
+- On-device speech recognition powered by Whisper
+- Readability and style suggestions use local heuristics, not a second AI model
+- Sentence, word-group, single-word, and dynamic karaoke subtitle layouts
+- Timeline editing, word-level timing controls, and preset typography styles
+- SRT, VTT, JSON project, and burned-in video export
+- Local project settings saved in your browser
+- Static GitHub Pages deployment with no application server or build dependencies
 
-## Kullanım
+## Usage
 
-Yayınlanan sayfayı güncel Chrome, Edge veya Safari'de açın. İlk konuşma tanıma işleminde seçilen model internetten indirilir; mobil cihazlarda daha hafif olan Tiny modeli önerilir. Video ve ses dosyaları sunucuya yüklenmez.
+Open the published page in a recent version of Chrome, Edge, or Safari. The selected model is downloaded the first time you run speech recognition; Tiny is recommended on mobile. Your video and audio files are not uploaded.
 
-Tarayıcıdaki video dışa aktarma desteği cihaza göre değişebilir. Dışa aktarma sırasında sekmeyi açık tutun. Model indirme ve bazı tarayıcı özellikleri için HTTPS ya da `localhost` gereklidir.
+Video export support varies by browser and device. Keep the tab open while exporting. Model downloads and some browser features require HTTPS or `localhost`.
 
-Yerel kullanım için `stuido.html` dosyasını açın. GitHub Pages yayını kökte `index.html` sunar.
+For local use, open `stuido.html`. The GitHub Pages deployment serves the app at the site root as `index.html`.
