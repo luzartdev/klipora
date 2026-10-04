@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible issue without sharing private media.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach video/audio files, personal information, API keys, or other private data. Include only the details needed to reproduce the issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+      placeholder: A clear, concise description.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the actions that lead to the problem. Use a synthetic or non-sensitive example.
+      placeholder: |
+        1. Open Klipora
+        2. Choose a compatible test video
+        3. Select ...
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 130, Safari 18, etc.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and operating system
+      placeholder: Desktop or phone model and OS version
+    validations:
+      required: true
+  - type: dropdown
+    id: model
+    attributes:
+      label: Whisper model, if relevant
+      options:
+        - Not relevant
+        - Tiny
+        - Base
+        - Small
+        - Medium
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or console output
+      description: Remove file names or other private details before posting.
+      render: text
